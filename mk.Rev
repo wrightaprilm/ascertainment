@@ -1,0 +1,41 @@
+data <- readDiscreteCharacterData("Ahlberg_et_Clack_1998a.nex")
+n_species <- data.ntaxa()
+names <- data.names()
+mi = 0
+Q <- fnJC(4)
+shape_prior <-50
+alpha ~ dnExponential(shape_prior)
+gamma_rates := fnDiscretizeGamma( alpha, alpha, 4 )
+
+n_branches <- 2 * n_species - 3
+for (i in 1:n_branches){
+br_lens[i] ~ dnExponential(10.0)
+moves[++mi] = mvScale(br_lens[i]) 
+}
+TL := sum(br_lens)
+phylogeny := treeAssembly(topology, br_lens)
+
+seq ~ dnPhyloCTMC(tree=phylogeny, Q=Q, type="Standard")
+
+seq.clamp(data)
+monitors[1] = mnModel(filename="output/primates_cytb_HKY_posterior.log",printgen=10, separator = TAB)
+monitors[2] = mnFile(filename="output/primates_cytb_HKY_posterior.trees",printgen=10, separator = TAB, phylogeny)
+monitors[3] = mnScreen(printgen=1000, TL)
+
+mymcmc = mcmc(mymodel, monitors, moves)
+
+
+mymcmc.burnin(generations=10000,tuningInterval=1000)
+mymcmc.run(generations=30000)
+
+mymodel = model(Q)
+
+
+monitors[1] = mnModel(filename="output/test.log",printgen=10, separator = TAB)
+monitors[2] = mnFile(filename="output/test.trees",printgen=10, separator = TAB, phylogeny)
+monitors[3] = mnScreen(printgen=1000, TL)
+
+mymcmc = mcmc(mymodel, monitors, moves)
+
+mymcmc.burnin(generations=10000,tuningInterval=1000)
+mymcmc.run(generations=1000000)
