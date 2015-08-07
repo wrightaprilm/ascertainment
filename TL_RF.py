@@ -35,6 +35,9 @@ for file in ilist:
 
 df = pd.DataFrame(shared_files)
 df['RF'] = RF
+df['TLDiff'] = TLdiff
+df['TL1'] = TL1
+df['TL2'] = TL2
 print(df)
 df.to_csv('c.csv')
 
